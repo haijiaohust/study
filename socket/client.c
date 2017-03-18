@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
 	int port = 8080;
 	char str[1024];
 	char buf[max_len];
+	int error;
 
 	if(argc < 2)
 	{
@@ -27,21 +28,40 @@ int main(int argc, char *argv[])
 	inet_pton(AF_INET, "192.168.22.135", &sin.sin_addr);
 
 	sfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	if(sfd < 0)
+	if(sfd == -1)
 	{
 		printf("socket() error\n");
-		exit(-1);
+		exit(1);
 	}
 
-	connect(sfd, (struct sockaddr*)&sin, sizeof(sin));
+	error = connect(sfd, (struct sockaddr*)&sin, sizeof(sin));
+	if(error == -1)
+	{
+		printf("connect() error\n");
+		exit(1);
+	}
 
-	write(sfd, str, strlen(str) + 1);
+	error = send(sfd, str, strlen(str) + 1, 0);
+	if(error == -1)
+	{
+		printf("send() error");
+		exit(1);
+	}
 
-	read(sfd, buf, max_len);
+	error = recv(sfd, buf, max_len, 0);
+	if(error == -1)
+	{
+		printf("recv() error\n");
+		exit(1);
+	}
 
-	printf("%s\n", buf);
+	printf("the length of str is: %s\n", buf);
 
-	close(sfd);
+	if(close(sfd) == -1)
+	{
+		printf("close() error\n");
+		exit(1);
+	}
+
 	return 0;
 }

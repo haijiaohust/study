@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 
 int main()
@@ -12,30 +10,29 @@ int main()
 	unsigned int port = 8080;
 	int error;
 	struct sockaddr_in server_addr;
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd < 0)
-	{
-		printf("Get sockfd error\n");
-		exit(0);
-	}
 
 	memset(&server_addr, 0, sizeof(struct sockaddr_in));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	inet_pton(AF_INET, "192.168.22.135", &server_addr.sin_addr.s_addr);
 
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if(sockfd == -1)
+	{
+		printf("Get sockfd error\n");
+		exit(1);
+	}
 	error = bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-	if(error < 0)
+	if(error == -1)
 	{
 		printf("bind() error!\n");
-		exit(0);
+		exit(1);
 	}
-
 	error = listen(sockfd, 10);
-	if(error < 0)
+	if(error == -1 )
 	{
 		printf("listen() error\n");
-		exit(0);
+		exit(1);
 	}
 
 	printf("waiting for client's request\n");
@@ -45,13 +42,25 @@ int main()
 		char client_ip[INET_ADDRSTRLEN];
 		socklen_t cliaddr_len = sizeof(client_addr);
 		char buf[4096];
-		int buf_len;
-
+		int nbytes;
 		int connfd;
+
 		connfd = accept(sockfd, (struct sockaddr*)&client_addr, &cliaddr_len);
-		if(connfd < 0)
+		if(connfd == -1)
 		{
 			printf("accept() error\n");
+			continue;
+		}
+		nbytes = recv(connfd, buf, 4096, 0);
+		if(nbytes == -1)
+		{
+			printf("recv() error\n");
+			exit(1);
+		}
+		else if(nbytes == 0)
+		{
+			printf("The connection has been closed\n");
+			close(connfd);
 			continue;
 		}
 
@@ -59,17 +68,25 @@ int main()
 		printf("information of client\n");
 		printf("client ip=%s port=%d\n", client_ip, ntohs(client_addr.sin_port));
 
-		buf_len = read(connfd, buf, 4096);
+		printf("content is:\n%s\n", buf);
+		sprintf(buf, "%d", strlen(buf));
 
-		printf("%s\n", buf);
+		nbytes = send(connfd, buf, strlen(buf) + 1, 0);
+		if(nbytes == -1)
+		{
+			printf("send() error\n");
+			exit(1);
+		}
 
-		write(connfd, buf, buf_len);
+		if(close(connfd) == -1)
+		{
+			printf("close() error\n");
+			exit(1);
+		}
 
-		close(connfd);
 		printf("client closed\n");
 	}
 
 	close(sockfd);
-
 	return 0;
 }
