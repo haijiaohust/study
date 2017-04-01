@@ -8,53 +8,72 @@ struct treenode{
 	int data;
 	struct treenode* left;
 	struct treenode* right;
+	struct treenode* parent;
 };
 
 class Bitree{
 public:
 	treenode* root;
-	void insert(int);
-	treenode* search(treenode*, int);
-	void preorder(treenode*);
-	void inorder(treenode*);
-	void afterorder(treenode*);
+	bool insert(int);
+	bool del(treenode*);
+	treenode* presuccessor(treenode*);
+	treenode* aftersuccessor(treenode*);
+	treenode* _search(treenode*, int);
+	treenode* search(int);
+	void visit(int);
+	void _preorder(treenode*);
+	void _inorder(treenode*);
+	void _afterorder(treenode*);
 	void destory(treenode*);
-	treenode* min(treenode* p){
-		if(p){
-			while(p->left)
-				p = p->left;
-			return p;
-		}
-		return NULL;
-	}
-	treenode* max(treenode* p){
-		if(p){
-			while(p->right)
-				p = p->right;
-			return p;
-		}
-		return NULL;
-	}
+	treenode* min_node(treenode* p);
+	treenode* max_node(treenode* p);
 	Bitree(){root = NULL;}
+	Bitree(int a[], int n){
+		root = NULL;
+		for(int i = 0; i < n; i++)
+			insert(a[i]);
+	}
 	~Bitree(){destory(root);}
 };
-treenode* Bitree::search(treenode* p, int a)
+treenode* Bitree::min_node(treenode* p){
+	if(p){
+		while(p->left)
+			p = p->left;
+		return p;
+	}
+	return NULL;
+}
+treenode* Bitree::max_node(treenode* p){
+	if(p){
+		while(p->right)
+			p = p->right;
+		return p;
+	}
+	return NULL;
+}
+treenode* Bitree::search(int a)
+{
+	return _search(root, a);
+}
+treenode* Bitree::_search(treenode* p, int a)
 {
 	if(!p)
 		return NULL;
 	if(p->data == a)
 		return p;
 	if(p->data > a)
-		search(p->left, a);
-	else search(p->right, a);
+		_search(p->left, a);
+	else _search(p->right, a);
 }
-void Bitree::insert(int a)
+bool Bitree::insert(int a)
 {
 	treenode* p = new treenode;
 	treenode* q = root;
 	treenode* y = root;
+	if(!p)
+		return false;
 	p->data = a;
-	p->left = p->right = NULL;
+	p->left = p->right = p->parent = NULL;
 	while(q){
 		y = q;
 		if(q->data > a)
@@ -64,35 +83,130 @@ void Bitree::insert(int a)
 	if(!y)
 		root = p;
 	else if(y->data > a)
+	{
 		y->left = p;
-	else y->right = p;
+		p->parent = y;
+	}
+	else{
+		y->right = p;
+		p->parent = y;
+	}
+	return true;
 }
 
-void Bitree::preorder(treenode* p)
+treenode* Bitree::presuccessor(treenode* p)
+{
+	if(!p)
+		return NULL;
+	else if(p->left)
+		return max_node(p->left);
+	treenode* y = p->parent;
+	while(y && p == y->left)
+	{
+		p = y;
+		y = y->parent;
+	}
+	return y;
+}
+treenode* Bitree::aftersuccessor(treenode* p)
+{
+	if(!p)
+		return NULL;
+	else if(p->right)
+		return min_node(p->right);
+	treenode* y = p->parent;
+	while(y && p == y->right){
+		p = y;
+		y = y->parent;
+	}
+	return y;
+}
+bool Bitree::del(treenode* p)
+{
+	if(!p)
+		return false;
+	else if(!p->left && !p->right){
+		if(!p->parent)
+			root = NULL;
+		else if(p->parent->left == p)
+			p->parent->left = NULL;
+		else p->parent->right = NULL;
+		delete p;
+		return true;
+	}
+	else if(!p->left && p->right){
+		p->right->parent = p->parent;
+		if(!p->parent){
+			root = p->right;
+			p->right->parent = NULL;
+		}
+		else if(p->parent->left == p)
+			p->parent->left = p->right;
+		else p->parent->right = p->right;
+		delete p;
+		return true;
+	}
+	else if(p->left && !p->right){
+		p->left->parent = p->parent;
+		if(!p->parent){
+			root = p->left;
+			p->left->parent = NULL;
+		}
+		else if(p->parent->left == p)
+			p->parent->left = p->left;
+		else p->parent->right = p->left;
+		delete p;
+		return true;
+	}
+	else{
+		treenode* y = aftersuccessor(p);
+		if(!y){
+			cout << "find aftersuccessor error"<< endl;
+			return false;
+		}
+		else p->data = y->data;
+		del(y);
+		return true;
+	}
+}
+
+void Bitree::visit(int flag)
+{
+	switch(flag)
+	{
+		case 1: _preorder(root);
+				break;
+		case 2:	_inorder(root);
+				break;
+		case 3: _afterorder(root);
+				break;
+	}
+}
+void Bitree::_preorder(treenode* p)
 {
 	if(p)
 	{
 		cout << p->data << ' ';
-		preorder(p->left);
-		preorder(p->right);
+		_preorder(p->left);
+		_preorder(p->right);
 	}
 }
 
-void Bitree::inorder(treenode* p)
+void Bitree::_inorder(treenode* p)
 {
 	if(p)
 	{
-		inorder(p->left);
+		_inorder(p->left);
 		cout << p->data << ' ';
-		inorder(p->right);
+		_inorder(p->right);
 	}
 }
-void Bitree::afterorder(treenode* p)
+void Bitree::_afterorder(treenode* p)
 {
 	if(p)
 	{
-		inorder(p->left);
-		inorder(p->right);
+		_afterorder(p->left);
+		_afterorder(p->right);
 		cout << p->data << ' ';
 	}
 }
@@ -106,27 +220,49 @@ void Bitree::destory(treenode* p)
 }
 int main()
 {
-	Bitree tree;
 	treenode* p = NULL;
-	int a[] = {10, 4, 2, 6, 12, 78, 45, 26};
-	for(int i = 0; i < 8; i++)
-		tree.insert(a[i]);
+	const int num = 8;
+	int a[num] = {10, 4, 2, 6, 45, 12, 78, 26};
+	Bitree tree(a, num);
 
-	tree.preorder(tree.root);
+	tree.visit(1);
 	cout << endl;
-	tree.inorder(tree.root);
+	tree.visit(2);
 	cout << endl;
-	p = tree.min(tree.root);
+	p = tree.min_node(tree.root);
 	if(p)
 		cout << p->data << endl;
 	else cout << "min error" << endl;
-	p = tree.max(tree.root);
+	p = tree.max_node(tree.root);
 	if(p)
 		cout << p->data << endl;
 	else cout << "max error" << endl;
-	p = tree.search(tree.root, 10);
+	p = tree.search(10);
 	if(p)
 		cout << p->left->data << ' ' << p->right->data << endl;
 	else cout << "search error" << endl;
+	for(int i = 0; i < num; i++)
+	{
+		p = tree.search(a[i]);
+		p = tree.aftersuccessor(p);
+		cout << a[i] << ' ';
+		if(p)
+			cout << p->data << ' ';
+		else cout << "no aftersuccessor" << ' ';
+		p = tree.search(a[i]);
+		p = tree.presuccessor(p);
+		if(p)
+			cout << p->data << endl;
+		else cout << "no presuccessor" << endl;
+	}
+	for(int i = 0; i < num; i++)
+	{
+		p = tree.search(a[i]);
+		if(p)
+			tree.del(p);
+		else cout << "find :" << a[i] << " error" << endl;
+		tree.visit(2);
+		cout << endl;
+	}
 	return 0;
 }
