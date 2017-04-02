@@ -16,10 +16,13 @@ public:
 	treenode* root;
 	bool insert(int);
 	bool del(treenode*);
-	treenode* presuccessor(treenode*);
-	treenode* aftersuccessor(treenode*);
+	treenode* successor(treenode*);
+	treenode* predecessor(treenode*);
 	treenode* _search(treenode*, int);
+	treenode* _search_iter(treenode*, int);
 	treenode* search(int);
+	int high();
+	int high(treenode*);
 	void visit(int);
 	void _preorder(treenode*);
 	void _inorder(treenode*);
@@ -35,6 +38,21 @@ public:
 	}
 	~Bitree(){destory(root);}
 };
+int Bitree::high()
+{
+	return high(root);
+}
+int Bitree::high(treenode* p)
+{
+	int lhigh, rhigh;
+	if(!p)
+		return 0;
+	else {
+		lhigh = high(p->left);
+		rhigh = high(p->right);
+		return 1 + (lhigh > rhigh ? lhigh : rhigh);
+	}
+}
 treenode* Bitree::min_node(treenode* p){
 	if(p){
 		while(p->left)
@@ -53,7 +71,19 @@ treenode* Bitree::max_node(treenode* p){
 }
 treenode* Bitree::search(int a)
 {
-	return _search(root, a);
+	return _search_iter(root, a);
+}
+treenode* Bitree::_search_iter(treenode* p, int a)
+{
+	treenode* q = p;
+	if(!q)
+		return NULL;
+	while(q && q->data != a){
+		if(q->data > a)
+			q = q->left;
+		else q = q->right;
+	}
+	return q;
 }
 treenode* Bitree::_search(treenode* p, int a)
 {
@@ -94,7 +124,7 @@ bool Bitree::insert(int a)
 	return true;
 }
 
-treenode* Bitree::presuccessor(treenode* p)
+treenode* Bitree::successor(treenode* p)
 {
 	if(!p)
 		return NULL;
@@ -108,7 +138,7 @@ treenode* Bitree::presuccessor(treenode* p)
 	}
 	return y;
 }
-treenode* Bitree::aftersuccessor(treenode* p)
+treenode* Bitree::predecessor(treenode* p)
 {
 	if(!p)
 		return NULL;
@@ -159,7 +189,7 @@ bool Bitree::del(treenode* p)
 		return true;
 	}
 	else{
-		treenode* y = aftersuccessor(p);
+		treenode* y = successor(p);
 		if(!y){
 			cout << "find aftersuccessor error"<< endl;
 			return false;
@@ -217,6 +247,7 @@ void Bitree::destory(treenode* p)
 	destory(p->left);
 	destory(p->right);
 	delete[] p;
+	p = NULL;
 }
 int main()
 {
@@ -241,16 +272,25 @@ int main()
 	if(p)
 		cout << p->left->data << ' ' << p->right->data << endl;
 	else cout << "search error" << endl;
+	p = tree.search(100);
+	if(p)
+		cout << p->left->data << ' ' << p->right->data << endl;
+	else cout << "search error" << endl;
+	cout << "high: " << tree.high() << endl;
+	p = tree.search(a[3]);
+	if(p)
+		cout << "high: " << tree.high(p) << endl;
+	else cout << "search error" << endl;
 	for(int i = 0; i < num; i++)
 	{
 		p = tree.search(a[i]);
-		p = tree.aftersuccessor(p);
+		p = tree.predecessor(p);
 		cout << a[i] << ' ';
 		if(p)
 			cout << p->data << ' ';
 		else cout << "no aftersuccessor" << ' ';
 		p = tree.search(a[i]);
-		p = tree.presuccessor(p);
+		p = tree.successor(p);
 		if(p)
 			cout << p->data << endl;
 		else cout << "no presuccessor" << endl;
