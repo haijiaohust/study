@@ -174,8 +174,8 @@ treenode* Bitree::_search(treenode* p, int a)  const
 	if(p->data == a)
 		return p;
 	if(p->data > a)
-		_search(p->left, a);
-	else _search(p->right, a);
+		return _search(p->left, a);
+	else return _search(p->right, a);
 }
 bool Bitree::insert(int a)
 {
@@ -206,7 +206,7 @@ bool Bitree::insert(int a)
 	return true;
 }
 
-treenode* Bitree::successor(treenode* p)  const
+treenode* Bitree::predecessor(treenode* p)  const
 {
 	if(!p)
 		return NULL;
@@ -220,7 +220,7 @@ treenode* Bitree::successor(treenode* p)  const
 	}
 	return y;
 }
-treenode* Bitree::predecessor(treenode* p)  const
+treenode* Bitree::successor(treenode* p)  const
 {
 	if(!p)
 		return NULL;
@@ -235,51 +235,30 @@ treenode* Bitree::predecessor(treenode* p)  const
 }
 bool Bitree::del(treenode* p)
 {
+	treenode* child = NULL;
+	treenode* parent = NULL;
 	if(!p)
 		return false;
-	else if(!p->left && !p->right){
-		if(!p->parent)
-			root = NULL;
-		else if(p->parent->left == p)
-			p->parent->left = NULL;
-		else p->parent->right = NULL;
-		delete p;
-		return true;
-	}
-	else if(!p->left && p->right){
-		p->right->parent = p->parent;
-		if(!p->parent){
-			root = p->right;
-			p->right->parent = NULL;
-		}
-		else if(p->parent->left == p)
-			p->parent->left = p->right;
-		else p->parent->right = p->right;
-		delete p;
-		return true;
-	}
-	else if(p->left && !p->right){
-		p->left->parent = p->parent;
-		if(!p->parent){
-			root = p->left;
-			p->left->parent = NULL;
-		}
-		else if(p->parent->left == p)
-			p->parent->left = p->left;
-		else p->parent->right = p->left;
-		delete p;
-		return true;
-	}
+	if(!p->left)
+		child = p->right;
+	else if(!p->right)
+		child = p->left;
 	else{
 		treenode* y = successor(p);
-		if(!y){
-			cout << "find aftersuccessor error"<< endl;
-			return false;
-		}
-		else p->data = y->data;
+		p->data = y->data;
 		del(y);
 		return true;
 	}
+	if(child)
+		child->parent = p->parent;
+	if(p->parent){
+		if(p->parent->left == p)
+			p->parent->left = child;
+		else p->parent->right = child;
+	}
+	else root = child;
+	delete p;
+	return true;
 }
 
 void Bitree::visit(int flag) const
@@ -491,12 +470,12 @@ int main()
 		cout << a[i] << ' ';
 		if(p)
 			cout << p->data << ' ';
-		else cout << "no aftersuccessor" << ' ';
+		else cout << "no predecessor" << ' ';
 		p = tree.search(a[i]);
 		p = tree.successor(p);
 		if(p)
 			cout << p->data << endl;
-		else cout << "no presuccessor" << endl;
+		else cout << "no successor" << endl;
 	}
 	for(int i = 0; i < num; i++)
 	{
