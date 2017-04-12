@@ -81,7 +81,7 @@ void preorder(treenode* root)
 
 void tree_destory(treenode* root)
 {
-	if(root)
+	if(!root)
 		return;
 	tree_destory(root->left);
 	tree_destory(root->right);
