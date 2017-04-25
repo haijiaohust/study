@@ -38,9 +38,17 @@ def list_path(rootdir):
     for file in files:
         cal_hash(os.path.join(rootdir, file))
 
-if os.path.isdir(path):
-    list_path(path)
-else:
-    cal_hash(os.path.join(path))
+def dedup_rate(path):
+    if os.path.isdir(path):
+        list_dirs = os.walk(path)
+        for root, dirs, files in list_dirs:
+            for d in dirs:
+                dedup_rate(os.path.join(root, d))
+            for f in files:
+                cal_hash(os.path.join(root, f))
+    else:
+        cal_hash(path)
+
+dedup_rate(path)
 
 print("chunks_all: %d chunks_not_dup: %d duprate:%f%%" % (chunks_all, chunks_not_dup, (chunks_all-chunks_not_dup)*1.0/chunks_all*100)) 
