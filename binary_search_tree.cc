@@ -2,82 +2,9 @@
 *二叉查找树
 */
 #include <iostream>
+#include <stack>
+#include <queue>
 using namespace std;
-
-template <class T, int MAXSIZE>
-class Queue{
-public:
-	T Q[MAXSIZE];
-	int front;
-	int rear;
-	void enqueue(T& a){
-		if(is_full()){
-			cout << "Queue is full" << endl;
-			return;
-		}
-		Q[rear] = a;
-		rear = (rear + 1) % MAXSIZE;
-	}
-	void outqueue(T& a){
-		if(is_empty()){
-			cout << "Queue is empty" << endl;
-			return ;
-		}
-		a = Q[front];
-		front = (front + 1) % MAXSIZE;
-	}
-	bool is_full(){
-		return (((rear + 1) % MAXSIZE) == front);
-	}
-	bool is_empty(){
-		return (rear == front);
-	}
-	Queue(): front(0), rear(0) {}
-};
-
-template <class T, int MAXSIZE>
-class Stack{
-public:
-	T st[MAXSIZE];
-	int top;
-	void push(T const&);
-	void pop(T &);
-	int getsize() const{
-		return top + 1;
-	}
-	void gettop(T& a){
-		if(is_empty())
-			cout << "pop error! stack is empty" << endl;
-		else a = st[top];
-	}
-	bool is_empty() const {
-		if(top == -1)
-			return true;
-		return false;
-	}
-	bool is_full() const {
-		if(top == MAXSIZE - 1)
-			return true;
-		return false;
-	}
-	Stack(): top(-1) {}
-};
-
-template <class T, int MAXSIZE>
-void Stack<T, MAXSIZE>::push(T const& a)
-{
-	if(is_full())
-		cout << "push error! stack is full" << endl;
-	else st[++top] = a;
-}
-
-template <class T, int MAXSIZE>
-void Stack<T, MAXSIZE>::pop(T& a)
-{
-	if(is_empty())
-		cout << "pop error! stack is empty" << endl;
-	else a = st[top--];
-}
 
 struct treenode{
 	int data;
@@ -283,134 +210,137 @@ void Bitree::visit(int flag) const
 				break;
 	}
 }
-void Bitree::_preorder(treenode* p) const
+void Bitree::_preorder(treenode* root) const
 {
-	if(p)
+	if(root)
 	{
-		cout << p->data << ' ';
-		_preorder(p->left);
-		_preorder(p->right);
+		cout << root->data << ' ';
+		_preorder(root->left);
+		_preorder(root->right);
 	}
 }
-void Bitree::_preorder_iter(treenode* p) const
+void Bitree::_preorder_iter(treenode* root) const
 {
-	Stack< treenode*, 1024 > s;
-	treenode* q = p;
-	while(q || !s.is_empty()){
-		while(q){
-			cout << q->data << ' ';
-			s.push(q);
-			q = q->left;
+	stack< treenode* > s;
+	treenode* cur = root;
+	while(cur || !s.empty()){
+		while(cur){
+			cout << cur->data << ' ';
+			s.push(cur);
+			cur = cur->left;
 		}
-		if(!s.is_empty()){
-			s.pop(q);
-			q = q->right;
+		if(!s.empty()){
+			cur = s.top();
+			s.pop();
+			cur = cur->right;
 		}
 	}
 }
 
-void Bitree::_inorder(treenode* p) const
+void Bitree::_inorder(treenode* root) const
 {
-	if(p)
+	if(root)
 	{
-		_inorder(p->left);
-		cout << p->data << ' ';
-		_inorder(p->right);
+		_inorder(root->left);
+		cout << root->data << ' ';
+		_inorder(root->right);
 	}
 }
-void Bitree::_inorder_iter(treenode* p) const
+void Bitree::_inorder_iter(treenode* root) const
 {
-	treenode* q = p;
-	Stack < treenode*, 1024 > s;
-	while(q || !s.is_empty()){
-		while(q){
-			s.push(q);
-			q = q->left;
+	treenode* cur = root;
+	stack < treenode* > s;
+	while(cur || !s.empty()){
+		while(cur){
+			s.push(cur);
+			cur = cur->left;
 		}
-		if(!s.is_empty()){
-			s.pop(q);
-			cout << q->data << ' ';
-			q = q->right;
+		if(!s.empty()){
+			cur = s.top();
+			s.pop();
+			cout << cur->data << ' ';
+			cur = cur->right;
 		}
 	}
 }
-void Bitree::_afterorder(treenode* p) const
+void Bitree::_afterorder(treenode* root) const
 {
-	if(p)
+	if(root)
 	{
-		_afterorder(p->left);
-		_afterorder(p->right);
-		cout << p->data << ' ';
+		_afterorder(root->left);
+		_afterorder(root->right);
+		cout << root->data << ' ';
 	}
 }
 
-void Bitree::_afterorder_iter(treenode* p) const
+void Bitree::_afterorder_iter(treenode* root) const
 {
-	int flag[100];
-	treenode* q = p;
-	Stack < treenode*, 1024 > s;
-	if(!p)
+	treenode* cur;
+	stack < treenode* > s;
+	if(!root)
 		return;
-	while(q || !s.is_empty()){
-		while(q){
-			s.push(q);
-			flag[s.getsize()] = 0;
-			q = q->left;
+	s.push(root);
+	treenode *pre = NULL;
+	while(!s.empty()){
+		cur = s.top();
+		//左孩子和右孩子同时为空，或者当前结点的左孩子或右孩子已经遍历过了
+		if(((cur->left == NULL) && (cur->right == NULL)) || ((pre != NULL) && (pre == cur->left || pre == cur->right)))
+		{
+			cout << cur->data << ' ';
+			s.pop();
+			pre = cur;
 		}
-		while(!s.is_empty() && flag[s.getsize()] == 1){
-			s.pop(q);
-			cout << q->data << ' ';
+		else{
+			if(cur->right)
+				s.push(cur->right);
+			if(cur->left)
+				s.push(cur->left);
 		}
-		if(!s.is_empty()){
-			flag[s.getsize()] = 1;
-			s.gettop(q);
-			q = q->right;
-		}
-		else break;
 	}
 }
-void Bitree::_depth_order(treenode* p) const
+void Bitree::_depth_order(treenode* root) const
 {
-	treenode* q = NULL;
-	Stack< treenode*, 1024 > stack;
-	if(!p)
+	treenode* cur = NULL;
+	stack< treenode* > s;
+	if(!root)
 		return;
-	stack.push(p);
-	while(!stack.is_empty())
+	s.push(root);
+	while(!s.empty())
 	{
-		stack.pop(q);
-		cout << q->data << ' ';
-		if(q->right)
-			stack.push(q->right);
-		if(q->left)
-			stack.push(q->left);
+		cur = s.top();
+		cout << cur->data << ' ';
+		s.pop();
+		if(cur->right)
+			s.push(cur->right);
+		if(cur->left)
+			s.push(cur->left);
 	}
 }
-void Bitree::_level_order(treenode* p) const
+void Bitree::_level_order(treenode* root) const
 {
-	treenode* q = NULL;
-	Queue< treenode*, 1024> qu;
-	if(!p)
+	treenode* cur = NULL;
+	queue< treenode*> qu;
+	if(!root)
 		return;
-	qu.enqueue(p);
-	while(!qu.is_empty())
+	qu.push(root);
+	while(!qu.empty())
 	{
-		qu.outqueue(q);
-		cout << q->data << ' ';
-		if(q->left)
-			qu.enqueue(q->left);
-		if(q->right)
-			qu.enqueue(q->right);
+		cur = qu.front();
+		cout << cur->data << ' ';
+		qu.pop();
+		if(cur->left)
+			qu.push(cur->left);
+		if(cur->right)
+			qu.push(cur->right);
 	}
 }
-void Bitree::destory(treenode* p)
+void Bitree::destory(treenode* root)
 {
-	if(!p)
+	if(!root)
 		return;
-	destory(p->left);
-	destory(p->right);
-	delete[] p;
-	p = NULL;
+	destory(root->left);
+	destory(root->right);
+	delete root;
 }
 int main()
 {
