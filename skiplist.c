@@ -56,6 +56,7 @@ void skiplist_destory(struct skiplist* sl)
 		free(p);
 		p = q;
 	}
+	free(sl->head);
 	free(sl);
 }
 
